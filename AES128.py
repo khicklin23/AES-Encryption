@@ -1,7 +1,7 @@
 """
 Needed:
-bitwise mod 2
-subsitution table
+bitwise XOR done
+subsitution table i.p.
 purmutation
 key Rijndael key schedule
 Implementation of rounds and ending on an XOR
@@ -9,6 +9,8 @@ Adaptability for 192 and 256 bit key encryption
 Output to text
 Condensed to hexidecimal
 Make it faster
+Organize it all / condense into fewer functions and one loop for n rounds depending on 128,192,256
+plaintext in binary (first 4 bytes): 01110100 01100101 01110011 01110100 
 
 key= "the more you see" 16 chars / bytes 128 bits
 01110100 01101000 01100101 00100000 01101101 01101111 01110010 01100101 00100000 01111001 01101111 01110101 00100000 01110011 01100101 01100101
@@ -19,13 +21,15 @@ import math
 
 key = "01110100011010000110010100100000011011010110111101110010011001010010000001111001011011110111010100100000011100110110010101100101"
 
+
 def bitWiseXOR(plaintext,key):
-  ciphertext = []
-  for i in plaintext:
-    if plaintext(i)+key(i) == "10" or plaintext(i)+key(i) == "01":
-        ciphertext.append("0")
-    else:
-        ciphertext.append("1") 
+    ciphertext = []
+    for i in range(len(plaintext)):
+        if plaintext[i] == key[i]:
+            ciphertext.append("0")
+        else:
+            ciphertext.append("1")
+    return ''.join(ciphertext)
 
 
 def toBinary(a):
@@ -52,14 +56,19 @@ keyBytesArr = np.array(keyBytes).reshape(4, 4).T
 
 
 print("\nPlaintext in Binary:")
-for col in range(4):
+for col in range(1):
   print("Column", col+1, ":")
   for row in range(4):
     print(ptBinaryArr[row, col])
 
 print("\nKey in Binary:")
-for col in range(4):
+for col in range(1):
   print("Column", col+1, ":")
   for row in range(4):
     print(keyBytesArr[row, col])
 
+print("\nCiphertext after XOR in Binary XOR 1 Round 1:")
+for col in range(1):
+  print("Column", col+1, ":")
+  for row in range(4):
+    print(bitWiseXOR(keyBytesArr[row, col],ptBinaryArr[row,col]))
