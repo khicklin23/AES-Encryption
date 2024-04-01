@@ -127,3 +127,6 @@ def SBoxSwitch(byte):
 
 byteTest = "10111100"
 print(SBoxSwitch(byteTest))
+def hex_to_binary(hex_string):
+    decimal_number = int(hex_string, 16)
+    binary_string = bin(decimal_number)[2:].zfill(8)
