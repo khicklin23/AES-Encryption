@@ -1,8 +1,8 @@
 """
 Needed:
 bitwise XOR done
-subsitution table i.p.
-purmutation
+subsitution table doneish
+def rotate next
 key Rijndael key schedule
 Implementation of rounds and ending on an XOR
 Adaptability for 192 and 256 bit key encryption
@@ -11,10 +11,11 @@ Condensed to hexidecimal
 Make it faster
 Organize it all / condense into fewer functions and one loop for n rounds depending on 128,192,256
 
-End goal convert it to an implementable class for 128, 192, and 256 that can encrypt and decrypt
+End goal convert it to an implementable class for 128, 192, and 256 that can encrypt and decrypt in java / python
 
 plaintext in binary (first 4 bytes): 01110100 01100101 01110011 01110100 
 key= "the more you see" 16 chars / bytes 128 bits
+plaintext test = "testing testing9" (inside of input.txt)
 01110100 01101000 01100101 00100000 01101101 01101111 01110010 01100101 00100000 01111001 01101111 01110101 00100000 01110011 01100101 01100101
 """
 #74 68 65 20 6D 6F 72 65 20 79 6F 75 20 73 65 65
