@@ -22,61 +22,8 @@ plaintext test = "testing testing9" (inside of input.txt)
 import numpy as np
 
 key = "01110100011010000110010100100000011011010110111101110010011001010010000001111001011011110111010100100000011100110110010101100101"
-
-
-def addRoundKey(plaintext,key):
-    ciphertext = []
-    for i in range(len(plaintext)):
-        if plaintext[i] == key[i]:
-            ciphertext.append("0")
-        else:
-            ciphertext.append("1")
-    return ''.join(ciphertext)
-
-
-def toBinary(a):
-  binary_list = []
-  for char in a:
-      binary_char = format(ord(char), '08b')
-      binary_list.append(binary_char)
-  return binary_list
-
-
-def toHex(a):
-  print("N/A")
-
-input = "input.txt"
-with open(input, "r") as file:
-    #Read first 16 chars
-    data = toBinary(file.read()[:16])
-
-
-# Grab first 128 bits of the ciphertext and the entire key and condense to a 4x4 array of bytes for both
-ptBinaryArr = np.array(list(data)).reshape(4,4).T
-keyBytes = [key[i:i+8] for i in range(0, len(key), 8)]
-keyBytesArr = np.array(keyBytes).reshape(4, 4).T
-
-
-print("\nPlaintext 1 in Binary:")
-for col in range(1):
-  print("Column", col+1, ":")
-  for row in range(4):
-    print(ptBinaryArr[row, col])
-
-print("\nKey 1 in Binary:")
-for col in range(1):
-  print("Column", col+1, ":")
-  for row in range(4):
-    print(keyBytesArr[row, col])
-
-print("\nCiphertext 1 after XOR in Binary XOR 1 Round 1:")
-for col in range(1):
-  print("Column", col+1, ":")
-  for row in range(4):
-    print(addRoundKey(keyBytesArr[row, col],ptBinaryArr[row,col]))
-print("\n")
-
-
+#Collumn number 4 for AES 128
+size = 4
 AES_Sbox = (
         0x63, 0x7C, 0x77, 0x7B, 0xF2, 0x6B, 0x6F, 0xC5, 0x30, 0x01, 0x67, 0x2B, 0xFE, 0xD7, 0xAB, 0x76,
         0xCA, 0x82, 0xC9, 0x7D, 0xFA, 0x59, 0x47, 0xF0, 0xAD, 0xD4, 0xA2, 0xAF, 0x9C, 0xA4, 0x72, 0xC0,
@@ -96,7 +43,10 @@ AES_Sbox = (
         0x8C, 0xA1, 0x89, 0x0D, 0xBF, 0xE6, 0x42, 0x68, 0x41, 0x99, 0x2D, 0x0F, 0xB0, 0x54, 0xBB, 0x16
         )
 AES_Sbox_array = np.array(AES_Sbox, dtype=np.uint8).reshape((16, 16))
-
+column_Matrix = np.array([[0x02, 0x03, 0x01, 0x01],
+                         [0x01, 0x2, 0x03, 0x01],
+                         [0x01, 0x1, 0x02, 0x03],
+                         [0x03, 0x01, 0x01, 0x02]], dtype=np.uint8)
 AES_SboxInverse = (
         0x52, 0x09, 0x6A, 0xD5, 0x30, 0x36, 0xA5, 0x38, 0xBF, 0x40, 0xA3, 0x9E, 0x81, 0xF3, 0xD7, 0xFB,
         0x7C, 0xE3, 0x39, 0x82, 0x9B, 0x2F, 0xFF, 0x87, 0x34, 0x8E, 0x43, 0x44, 0xC4, 0xDE, 0xE9, 0xCB,
@@ -117,16 +67,135 @@ AES_SboxInverse = (
         )
 AES_SboxInverse_array = np.array(AES_SboxInverse, dtype=np.uint8).reshape((16, 16))
 
-def SBoxSwitch(byte):
+
+
+
+#Xors two binary string
+def xor(byte1,byte2):
+    result = []
+    for bit1, bit2 in zip(byte1, byte2):
+        if bit1 == bit2:
+            result.append("0")
+        else:
+            result.append("1")
+    #print(byte1 + "   " + byte2+"  =  "+str(result))
+    return ''.join(result)
+
+#given input byte in binary switch and return as hex
+def SBox_Lookup(byte):
   b11 = byte[:4]
   b12 = byte[4:]
   column = int(b11, 2)  
   row = int(b12, 2)     
-  return (AES_Sbox_array[column, row])
+  return (hex(AES_Sbox_array[column, row]))
 
+#Char to binary
+def toBinary(a):
+  binary_list = []
+  for char in a:
+      binary_char = format(ord(char), '08b')
+      binary_list.append(binary_char)
+  return binary_list
 
-byteTest = "10111100"
-print(SBoxSwitch(byteTest))
+#Hex to binary
 def hex_to_binary(hex_string):
-    decimal_number = int(hex_string, 16)
-    binary_string = bin(decimal_number)[2:].zfill(8)
+  decimal_number = int(hex_string, 16)
+  binary_string = bin(decimal_number)[2:].zfill(8)
+  return (binary_string)
+
+
+#Read file
+input = "input.txt"
+with open(input, "r") as file:
+  #Read first 16 chars
+  data = toBinary(file.read()[:16])
+
+
+
+
+# Grab first 128 bits of the ciphertext and the entire key and condense to a 4x4 array of bytes for both
+state = np.array(list(data)).reshape(4,4).T
+keyBytes = [key[i:i+8] for i in range(0, len(key), 8)]
+keyBytesArr = np.array(keyBytes).reshape(4, 4).T
+
+
+
+
+def addRoundKey(state, keyBytesArr):
+  for col in range(size):
+    for row in range(4):
+      temp = xor(state[col, row],keyBytesArr[col, row])
+      state[col,row] = temp
+
+def substituteArray(state):
+  for col in range(size):
+    for row in range(4):
+      state[col, row] = SBox_Lookup(state[col, row])
+
+def shiftRows(state):
+  state[1] = np.roll(state[1], -1)
+  state[2] = np.roll(state[2], -2)
+  state[3] = np.roll(state[3], -3)
+
+def mixColumns(state):
+  
+  result = hex1 ^ hex2
+
+  print("Result of XOR:", hex(result))
+
+
+def AES_Encrypt():
+  #Read file
+  input = "input.txt"
+  with open(input, "r") as file:
+      #Read first 16 chars
+      data = toBinary(file.read()[:16])
+
+
+  # Grab first 128 bits of the ciphertext and the entire key and condense to a 4x4 array of bytes for both
+  state = np.array(list(data)).reshape(4,4).T
+  keyBytes = [key[i:i+8] for i in range(0, len(key), 8)]
+  keyBytesArr = np.array(keyBytes).reshape(4, 4).T 
+
+  print("\nPlaintext 1 in Binary:")
+  for row in range(4):
+    print(state[0,row]+" "+state[1,row]+" "+state[2,row]+" "+state[3,row]+" ")
+
+  print("\nKey 1 in Binary:")
+  for row in range(4):
+    print(keyBytesArr[0,row]+" "+keyBytesArr[1,row]+" "+keyBytesArr[2,row]+" "+keyBytesArr[3,row]+" ")
+  
+  #RoundKey
+  addRoundKey(state, keyBytesArr)
+  print("\nCiphertext After Round Key:")
+  for row in range(4):
+    print(state[0,row]+" "+state[1,row]+" "+state[2,row]+" "+state[3,row]+" ")
+  print("\n")
+
+  #Substiute
+  substituteArray(state)
+  print("\nCiphertext After Substitution:")
+  for row in range(4):
+    print(state[0,row]+" "+state[1,row]+" "+state[2,row]+" "+state[3,row]+" ")
+  print("\n")
+
+  #Shift Rows
+  shiftRows(state)
+  print("\nCiphertext After Shift Rows:")
+  for row in range(4):
+    print(state[0,row]+" "+state[1,row]+" "+state[2,row]+" "+state[3,row]+" ")
+
+  #Shift Mix Columns
+  mixColumns(state)
+  print("\nCiphertext After Mix Columns:")
+  for row in range(4):
+    print(state[0,row]+" "+state[1,row]+" "+state[2,row]+" "+state[3,row]+" ")
+  
+
+
+
+
+
+#Run
+AES_Encrypt()
+print("\n")
