@@ -144,6 +144,12 @@ def mixColumns(state):
   print("Result of XOR:", hex(result))
 
 
+
+def CBC:
+  print()
+
+
+
 def AES_Encrypt():
   #Read file
   input = "input.txt"
