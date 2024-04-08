@@ -147,16 +147,22 @@ def shiftRows(state):
   state[3] = np.roll(state[3], -3)
 
 
-def mixColumns(state):
-  state = np.array([[int(x, 16) for x in row] for row in state],
-                   dtype=np.uint8)
-  result = np.dot(column_Matrix, state.T).T
-  # Reduce modulo the AES polynomial
-  result %= np.uint8(0x11b)
-  result_hex = [['0x{:02x}'.format(x) for x in row] for row in result]
-  return result_hex
+def xtime(x):
+  return ((x << 1) ^ (0x1b if (x & 0x80) else 0x00)) & 0xff
 
+# Function to mix a single column
+def mix_single_column(a):
+  t = a[0] ^ a[1] ^ a[2] ^ a[3]
+  u = a[0]
+  a[0] ^= t ^ xtime(a[0] ^ a[1])
+  a[1] ^= t ^ xtime(a[1] ^ a[2])
+  a[2] ^= t ^ xtime(a[2] ^ a[3])
+  a[3] ^= t ^ xtime(a[3] ^ u)
 
+# Function to mix all columns
+def mixColumns(s):
+  for i in range(4):
+      mix_single_column(s[i])
 
 
 def AES_Encrypt():
@@ -215,10 +221,3 @@ def AES_Encrypt():
 #Run
 AES_Encrypt()
 print("\n")
-
-
-"""/home/runner/AES/main.py:155: DeprecationWarning: NumPy will stop allowing conversion of out-of-bound Python integers to integer arrays.  The conversion of 283 to uint8 will fail in the future.
-For the old behavior, usually:
-    np.array(value).astype(dtype)
-will give the desired result (the cast overflows).
-  result %= np.uint8(0x11b)"""
