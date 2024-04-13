@@ -1,9 +1,9 @@
 """
 Needed:
 bitwise XOR done
-subsitution table doneish
-def rotate next
-key Rijndael key schedule
+subsitution table done
+rotate done
+Rijndael key schedule
 Implementation of rounds and ending on an XOR
 Adaptability for 192 and 256 bit key encryption
 Output to text
