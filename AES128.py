@@ -129,9 +129,11 @@ class AES:
   
   
   def shiftRows(self, state):
-    self.state[1] = np.roll(self.state[1], 1)
-    self.state[2] = np.roll(self.state[2], 2)
-    self.state[3] = np.roll(self.state[3], 3)
+    state[:, 1] = [state[1, 1], state[2, 1], state[3, 1], state[0, 1]]
+    # Shift the third column two positions down
+    state[:, 2] = [state[2, 2], state[3, 2], state[0, 2], state[1, 2]]
+    # Shift the fourth column three positions down
+    state[:, 3] = [state[3, 3], state[0, 3], state[1, 3], state[2, 3]]
     self.state = state
   
   
