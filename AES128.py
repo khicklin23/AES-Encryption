@@ -48,9 +48,7 @@ class AES:
                 0x89, 0x0D, 0xBF, 0xE6, 0x42, 0x68, 0x41, 0x99, 0x2D, 0x0F, 0xB0,
                 0x54, 0xBB, 0x16)
     self.AES_Sbox_array = np.array(self.AES_Sbox, dtype=np.uint8).reshape((16, 16))
-    self.column_Matrix = np.array([[0x02, 0x03, 0x01, 0x01], [0x01, 0x2, 0x03, 0x01],
-                            [0x01, 0x1, 0x02, 0x03], [0x03, 0x01, 0x01, 0x02]],
-                           dtype=np.uint8)
+    self.column_Matrix = np.array([[2, 3, 1, 1], [1, 2, 3, 1], [1, 1, 2, 3], [3, 1, 1, 2]], dtype=np.uint8)
     self.AES_SboxInverse = (
         0x52, 0x09, 0x6A, 0xD5, 0x30, 0x36, 0xA5, 0x38, 0xBF, 0x40, 0xA3, 0x9E,
         0x81, 0xF3, 0xD7, 0xFB, 0x7C, 0xE3, 0x39, 0x82, 0x9B, 0x2F, 0xFF, 0x87,
@@ -136,24 +134,20 @@ class AES:
     state[:, 3] = [state[3, 3], state[0, 3], state[1, 3], state[2, 3]]
     self.state = state
   
+  def mixColumns(self, state):
+    result = np.zeros_like(state, dtype=np.uint8)
   
-  def xtime(self, x):
-    return ((x << 1) ^ (0x1b if (x & 0x80) else 0x00)) & 0xff
+    # Perform the matrix multiplication
+    for col in range(4):
+        for row in range(4):
+            # Convert the column matrix elements to uint8
+            column_matrix_uint8 = np.array(self.column_Matrix[row], dtype=np.uint8)
+            # Calculate the dot product of the column matrix and the column of the state
+            result[row, col] = np.bitwise_xor.reduce(np.bitwise_and(column_matrix_uint8, state[:, col]))
   
-  # Function to mix a single column
-  def mix_single_column(self, a):
-    t = a[0] ^ a[1] ^ a[2] ^ a[3]
-    u = a[0]
-    a[0] ^= t ^ self.xtime(a[0] ^ a[1])
-    a[1] ^= t ^ self.xtime(a[1] ^ a[2])
-    a[2] ^= t ^ self.xtime(a[2] ^ a[3])
-    a[3] ^= t ^ self.xtime(a[3] ^ u)
-  
-  # Function to mix all columns
-  def mixColumns(self, s):
-    for i in range(4):
-        self.mix_single_column(s[i])
-  
+    self.state = result
+
+    
   
   def AES_Encrypt(self):
     #Read file
