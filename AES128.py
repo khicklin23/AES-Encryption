@@ -1,4 +1,7 @@
 """
+First success at one full round of encryption and n rounds
+
+Next:
 Iterate state by 16 chars
 Rijndael Key Schedule
 Cipher Block Chaining
@@ -37,7 +40,6 @@ class AES:
         0x89, 0x0D, 0xBF, 0xE6, 0x42, 0x68, 0x41, 0x99, 0x2D, 0x0F, 0xB0,
         0x54, 0xBB, 0x16)
     self.AES_Sbox_array = np.array(self.AES_Sbox, dtype=np.uint8).reshape((16, 16))
-    self.mix_columns_matrix = np.array([[0x02, 0x03, 0x01, 0x01],[0x01, 0x02, 0x03, 0x01],[0x01, 0x01, 0x02, 0x03],[0x03, 0x01, 0x01, 0x02]], dtype=np.uint8)
     self.AES_SboxInverse = (
         0x52, 0x09, 0x6A, 0xD5, 0x30, 0x36, 0xA5, 0x38, 0xBF, 0x40, 0xA3, 0x9E,
         0x81, 0xF3, 0xD7, 0xFB, 0x7C, 0xE3, 0x39, 0x82, 0x9B, 0x2F, 0xFF, 0x87,
@@ -124,7 +126,7 @@ class AES:
     state[:, 2] = [state[2, 2], state[3, 2], state[0, 2], state[1, 2]]
     # Shift the fourth column three positions down
     state[:, 3] = [state[3, 3], state[0, 3], state[1, 3], state[2, 3]]
-    self.state = state
+    return state
   
 
 
@@ -174,7 +176,7 @@ class AES:
   
   def AES_Encrypt(self):
     #Read file
-    rounds=10
+    rounds=1
     input = "input.txt"
     with open(input, "r") as file:
       #Read first 16 chars
@@ -183,19 +185,21 @@ class AES:
     # Grab first 128 bits of the ciphertext and the entire key and condense to a 4x4 array of bytes for both
     self.state = np.array(list(data)).reshape(4, 4).T
     self.keyBytes = [key[i:i + 8] for i in range(0, len(key), 8)]
-    self.keyBytesArr = np.array(self.keyBytes).reshape(4, 4).T
+    self.keyBytesArr = np.array(self.keyBytes).reshape(4, 4)
 
-    while rounds >0:
-      print("\nPlaintext 1 in Binary:")
+    while rounds <=10:
+      print("\nStarting text for round "+str(rounds)+":")
       for row in range(4):
         print(self.state[0, row] + " " + self.state[1, row] + " " + self.state[2, row] + " " +
               self.state[3, row] + " ")
-    
-      print("\nKey 1 in Binary:")
+      print("\n")
+
+      print("\nKey "+str(rounds)+" in Binary:")
       for row in range(4):
         print(self.keyBytesArr[0, row] + " " + self.keyBytesArr[1, row] + " " +
               self.keyBytesArr[2, row] + " " + self.keyBytesArr[3, row] + " ")
-    
+        
+        
       #RoundKey
       self.addRoundKey(self.state, self.keyBytesArr)
       print("\nCiphertext After Round Key:")
@@ -213,7 +217,7 @@ class AES:
       print("\n")
     
       #Shift Rows
-      self.shiftRows(self.state)
+      self.state = self.shiftRows(self.state)
       print("\nCiphertext After Shift Rows: (INTEGER)")
       for row in range(4):
         print(self.state[0, row] + " " + self.state[1, row] + " " + self.state[2, row] + " " +
@@ -223,25 +227,31 @@ class AES:
 
       #Shift Mix Columns
       self.state = (self.mixColumns(self.state))
-      print("\nCiphertext After Mix Columns:")
+      print("\nCiphertext After Mix Columns: (HEX)")
       
       for row in range(4):
         print(hex(self.state[0, row])[2:].zfill(2) + " " +
                 hex(self.state[1, row])[2:].zfill(2) + " " +
                 hex(self.state[2, row])[2:].zfill(2) + " " +
                 hex(self.state[3, row])[2:].zfill(2))
-      
+        
 
+      binary_string = ''.join([format(num, '08b') for num in self.state.flatten()])
+      self.bin = [binary_string[i:i + 8] for i in range(0, len(binary_string), 8)]
+      self.state = np.array(self.bin).reshape(4, 4)
 
+      print("\n")
       rounds+=1
-    """result = ""
+    print("\n\nFINAL OUTPUT AFTER 10 ROUNDS:\n")
+    result = ""
     for row in range(4):
         # Print in order left to right
-        result += ''.join([hex(self.state[row, 0])[2:].zfill(2),
-                          hex(self.state[row, 1])[2:].zfill(2),
-                          hex(self.state[row, 2])[2:].zfill(2),
-                          hex(self.state[row, 3])[2:].zfill(2)])
-    print(result)"""
+        result += ''.join(hex(self.state[row, 0]),
+                          hex(self.state[row, 1]),
+                          hex(self.state[row, 2]),
+                          hex(self.state[row, 3]))
+    print(result)
+    
 
 
     
@@ -256,7 +266,14 @@ print("\n")
 
 
 
-
+"""result = ""
+    for row in range(4):
+        # Print in order left to right
+        result += ''.join([hex(self.state[row, 0])[2:].zfill(2),
+                          hex(self.state[row, 1])[2:].zfill(2),
+                          hex(self.state[row, 2])[2:].zfill(2),
+                          hex(self.state[row, 3])[2:].zfill(2)])
+    print(result)"""
 
 """def printHex(val):
     return print('{:02x}'.format(val), end=' ')"""
